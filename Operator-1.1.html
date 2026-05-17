@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operator — SAV Command Center</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#000;--s1:#0f0f0f;--s2:#161616;--s3:#1e1e1e;--s4:#252525;
+--b1:#232323;--b2:#2e2e2e;--b3:#3a3a3a;
+--t1:#fff;--t2:#b0b0b0;--t3:#555;--t4:#333;
+--gr:#32d74b;--or:#ff9f0a;--rd:#ff453a;--bl:#4fa3ff;--pu:#bf5af2;
+--wh-d:rgba(255,255,255,.08);--wh-d2:rgba(255,255,255,.04);
+--r:12px;--rs:8px;--rx:6px;--sidebar:210px
+}
+html,body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--t1);height:100%;margin:0;padding:0}
+
+/* ── SETUP ── */
+#setup{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:all}
+#setup.hidden{display:none}
+.ss{display:none;flex-direction:column;align-items:center;text-align:center;max-width:360px;width:100%;padding:0 28px}
+.ss.vis{display:flex;animation:fadeUp .45s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.s-logo{width:64px;height:64px;background:var(--s2);border:1px solid var(--b2);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:26px}
+.s-logo-t{font-size:20px;font-weight:700;letter-spacing:-.03em;color:var(--t1)}
+.s-logo-s{font-size:9px;font-weight:500;color:var(--t4);letter-spacing:.06em;margin-top:2px}
+.s-h{font-size:26px;font-weight:700;letter-spacing:-.03em;color:var(--t1);margin-bottom:10px}
+.s-p{font-size:13px;color:var(--t2);line-height:1.75;margin-bottom:32px}
+.s-dots{display:flex;gap:7px;margin-bottom:36px}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--b3);transition:background .3s}
+.sdot.on{background:var(--t1)}
+.s-input{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:var(--rs);padding:13px 16px;color:var(--t1);font-size:15px;font-family:inherit;outline:none;text-align:center;margin-bottom:20px;transition:border-color .2s}
+.s-input:focus{border-color:var(--b3)}
+.s-input::placeholder{color:var(--t4)}
+.btn-p{background:var(--t1);color:#000;border:none;border-radius:var(--rs);padding:13px 28px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .15s;width:100%}
+.btn-p:hover{opacity:.85}
+.btn-p:disabled{opacity:.28;cursor:not-allowed}
+.btn-g{background:transparent;color:var(--t2);border:1px solid var(--b2);border-radius:var(--rs);padding:12px 28px;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;width:100%;margin-top:9px}
+.btn-g:hover{background:var(--wh-d2);color:var(--t1)}
+.feat-list{display:flex;flex-direction:column;gap:9px;width:100%;margin-bottom:28px;text-align:left}
+.feat{display:flex;align-items:flex-start;gap:11px;padding:12px 13px;background:var(--s2);border:1px solid var(--b2);border-radius:var(--rx)}
+.feat-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.feat-t{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.feat-s{font-size:11px;color:var(--t3)}
+.check-big{font-size:40px;margin-bottom:18px;animation:pulse 1.8s ease infinite}
+
+/* ── APP ── */
+#app{display:flex;flex-direction:column;height:100vh;pointer-events:all}
+.bar{height:44px;background:rgba(0,0,0,.96);border-bottom:1px solid var(--b1);display:flex;align-items:center;padding:0 18px;flex-shrink:0;position:relative}
+.dots{display:flex;gap:6px}
+.dot{width:11px;height:11px;border-radius:50%}
+.d-r{background:#ff5f57}.d-y{background:#ffbd2e}.d-g{background:#28c840}
+.bar-t{font-size:13px;font-weight:600;color:var(--t1);position:absolute;left:50%;transform:translateX(-50%)}
+.bar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.bar-co{font-size:11px;color:var(--t3);background:var(--s2);border:1px solid var(--b1);padding:2px 9px;border-radius:20px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-v{font-size:10px;color:var(--t4)}
+.wrap{display:flex;flex:1;overflow:hidden}
+.side{width:var(--sidebar);min-width:var(--sidebar);background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
+.main-a{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.side-h{padding:14px 10px 6px}
+.co-pill{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s2);border:1px solid var(--b1);border-radius:var(--rs);margin-bottom:14px}
+.co-dot{width:7px;height:7px;border-radius:50%;background:var(--gr);flex-shrink:0}
+.co-nm{font-size:12px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-lbl{font-size:9px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.08em;padding:0 7px;margin-bottom:4px}
+.nav{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--rx);cursor:pointer;color:var(--t2);transition:background .12s,color .12s;user-select:none;font-size:12px}
+.nav:hover{background:var(--wh-d2);color:var(--t1)}
+.nav.on{background:var(--wh-d);color:var(--t1);font-weight:500}
+.nav-ic{width:14px;height:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.6}
+.nav.on .nav-ic{opacity:1}
+.nbadge{margin-left:auto;font-size:9px;font-weight:700;color:var(--t4);background:var(--s3);border:1px solid var(--b1);padding:1px 5px;border-radius:8px}
+.sdiv{height:1px;background:var(--b1);margin:7px 10px}
+.sfoot{margin-top:auto;padding:10px 12px;border-top:1px solid var(--b1);font-size:10px;color:var(--t4);text-align:center;line-height:1.75}
+.sfoot strong{color:var(--t3);font-weight:500}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:24px 26px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--b2);border-radius:10px}
+.pg{display:none}.pg.on{display:block}
+.ph{margin-bottom:22px}
+.ph h1{font-size:21px;font-weight:700;letter-spacing:-.03em;color:var(--t1);margin-bottom:4px}
+.ph p{font-size:12px;color:var(--t4)}
+
+/* SEARCH */
+.sw{position:relative;margin-bottom:20px}
+.sw input{width:100%;background:var(--s1);border:1px solid var(--b1);border-radius:var(--rs);padding:9px 12px 9px 35px;color:var(--t1);font-size:12px;font-family:inherit;outline:none;transition:border-color .15s}
+.sw input::placeholder{color:var(--t4)}
+.sw input:focus{border-color:var(--b2)}
+.sw-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none}
+.sr{display:none;margin-top:5px;background:var(--s1);border:1px solid var(--b1);border-radius:var(--rs);overflow:hidden;position:absolute;width:100%;z-index:50}
+.sr.vis{display:block}
+.sri{padding:9px 13px;cursor:pointer;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--b1);transition:background .1s}
+.sri:last-child{border-bottom:none}
+.sri:hover{background:var(--wh-d2)}
+.s-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--wh-d);color:var(--t2);flex-shrink:0;text-transform:uppercase;letter-spacing:.03em}
+.s-txt{color:var(--t1);font-size:12px}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:14px;transition:border-color .15s,background .15s;cursor:pointer}
+.card:hover{border-color:var(--b2);background:var(--s2)}
+.ch{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px;gap:6px}
+.ci{width:28px;height:28px;border-radius:var(--rx);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.cs{font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em;flex-shrink:0}
+.ct{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:3px}
+.cd{font-size:11px;color:var(--t3);line-height:1.5;margin-bottom:10px}
+.lbtn{display:inline-flex;align-items:center;font-size:10px;font-weight:500;color:var(--t2);background:var(--s3);border:1px solid var(--b2);padding:4px 9px;border-radius:20px;pointer-events:none}
+.c-or{background:rgba(255,159,10,.15);color:var(--or)}
+.c-rd{background:rgba(255,69,58,.15);color:var(--rd)}
+.c-bl{background:rgba(79,163,255,.15);color:var(--bl)}
+.c-gr{background:rgba(50,215,75,.15);color:var(--gr)}
+.c-pu{background:rgba(191,90,242,.15);color:var(--pu)}
+.c-nt{background:var(--wh-d);color:var(--t2)}
+.bg-or{background:rgba(255,159,10,.1)}
+.bg-rd{background:rgba(255,69,58,.1)}
+.bg-bl{background:rgba(79,163,255,.1)}
+.bg-gr{background:rgba(50,215,75,.1)}
+.bg-pu{background:rgba(191,90,242,.1)}
+.bg-nt{background:var(--wh-d)}
+.slb{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t4);margin:18px 0 9px;display:flex;align-items:center;gap:6px}
+.slb::after{content:'';flex:1;height:1px;background:var(--b1)}
+.slb:first-child{margin-top:0}
+
+/* PROTOCOLS master-detail */
+.proto-shell{display:flex;border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;height:calc(100vh - 182px)}
+.proto-sidebar{width:192px;min-width:192px;border-right:1px solid var(--b1);background:var(--s1);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--b1) transparent}
+.proto-sidebar::-webkit-scrollbar{width:3px}
+.proto-sidebar::-webkit-scrollbar-thumb{background:var(--b2)}
+.pl-item{display:flex;align-items:center;gap:9px;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--b1);transition:background .1s;user-select:none}
+.pl-item:last-child{border-bottom:none}
+.pl-item:hover{background:var(--s2)}
+.pl-item.on{background:var(--s3)}
+.pl-item.on .pl-nm{color:var(--t1);font-weight:600}
+.pl-dot{width:6px;height:6px;min-width:6px;border-radius:50%}
+.pl-nm{font-size:11.5px;color:var(--t2);line-height:1.35}
+.proto-detail{flex:1;background:var(--s2);padding:20px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--b2) transparent}
+.proto-detail::-webkit-scrollbar{width:3px}
+.proto-detail::-webkit-scrollbar-thumb{background:var(--b2)}
+.pd-h{font-size:16px;font-weight:700;color:var(--t1);letter-spacing:-.02em;margin-bottom:3px}
+.pd-sub{font-size:11px;color:var(--t3);margin-bottom:18px}
+.steps{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.step{display:flex;align-items:flex-start;gap:8px;padding:9px 11px;background:var(--s1);border-radius:var(--rx);border:1px solid var(--b1)}
+.sn{width:18px;height:18px;min-width:18px;border-radius:50%;background:var(--s3);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--t2);margin-top:1px}
+.stx{font-size:11.5px;color:var(--t2);line-height:1.55}
+.stx strong{color:var(--t1);font-weight:600}
+.decs{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.dec{display:flex;align-items:center;gap:8px;padding:8px 11px;background:var(--s1);border-radius:var(--rx);border:1px solid var(--b1);font-size:11px;flex-wrap:wrap}
+.dif{font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:10px;flex-shrink:0;letter-spacing:.04em}
+.dth{color:var(--t2);flex:1}
+.dar{color:var(--t3);font-size:10px}
+.go-tmpl{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;color:var(--t2);background:var(--s1);border:1px solid var(--b2);padding:6px 12px;border-radius:20px;cursor:pointer;transition:all .12s;font-family:inherit}
+.go-tmpl:hover{color:var(--t1);border-color:var(--b3)}
+
+/* TEMPLATES */
+.tmpl-cats{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.tcat{padding:5px 13px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--b1);color:var(--t2);background:transparent;transition:all .12s;font-family:inherit}
+.tcat:hover{background:var(--wh-d2);color:var(--t1)}
+.tcat.on{background:var(--wh-d);color:var(--t1);border-color:var(--b2)}
+.tit{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:15px 16px;margin-bottom:9px;transition:border-color .15s}
+.tit:hover{border-color:var(--b2)}
+.tit.hidden{display:none}
+.tm{display:flex;align-items:center;gap:7px;margin-bottom:10px;flex-wrap:wrap}
+.ttag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:10px}
+.tlbl{font-size:12px;font-weight:600;color:var(--t1)}
+.tton{margin-left:auto;font-size:10px;color:var(--t3)}
+.tbody{background:var(--s2);border:1px solid var(--b1);border-radius:var(--rx);padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.7;white-space:pre-wrap;font-family:inherit;margin-bottom:10px}
+.tvar{color:var(--bl);font-weight:500}
+.cpbtn{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:500;color:var(--t2);background:var(--s3);border:1px solid var(--b1);padding:5px 11px;border-radius:20px;cursor:pointer;transition:all .12s;font-family:inherit}
+.cpbtn:hover{background:var(--b2);color:var(--t1)}
+.cpbtn.ok{color:var(--gr);border-color:rgba(50,215,75,.3)}
+
+/* SETTINGS / INFO */
+.iblock{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}
+.ibt{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t4);margin-bottom:12px}
+.ir{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b1);gap:12px}
+.ir:last-child{border-bottom:none}
+.ik{font-size:12px;color:var(--t3)}
+.iv{font-size:12px;color:var(--t1);font-weight:500}
+.set-input{background:var(--s2);border:1px solid var(--b1);border-radius:var(--rx);padding:6px 11px;color:var(--t1);font-size:12px;font-family:inherit;outline:none;width:190px;transition:border-color .15s}
+.set-input:focus{border-color:var(--b2)}
+.set-sub{font-size:10px;color:var(--t4);margin-top:2px}
+.save-btn{background:var(--t1);color:#000;border:none;border-radius:var(--rx);padding:6px 16px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .15s}
+.save-btn:hover{opacity:.84}
+.reset-btn{display:inline-flex;align-items:center;font-size:11px;font-weight:500;color:var(--rd);background:rgba(255,69,58,.1);border:1px solid rgba(255,69,58,.25);padding:5px 12px;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s}
+.reset-btn:hover{background:rgba(255,69,58,.2)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--s4);border:1px solid var(--b2);color:var(--t1);font-size:12px;font-weight:500;padding:7px 16px;border-radius:20px;opacity:0;transition:all .22s;pointer-events:none;z-index:99999;white-space:nowrap}
+.toast.sh{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP OVERLAY ══ -->
+<div id="setup">
+  <!-- Step 0 -->
+  <div class="ss vis" id="ss0">
+    <div class="s-logo"><div class="s-logo-t">Op</div><div class="s-logo-s">SAV</div></div>
+    <div class="s-dots"><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div></div>
+    <div class="s-h">Bienvenue dans Operator</div>
+    <div class="s-p">Le centre de commande SAV conçu pour professionnaliser votre service client e-commerce. Simple, rapide, efficace.</div>
+    <button class="btn-p" onclick="nextStep(1)">Commencer la configuration</button>
+  </div>
+  <!-- Step 1 -->
+  <div class="ss" id="ss1">
+    <div class="s-dots" style="margin-bottom:28px"><div class="sdot"></div><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div></div>
+    <div class="s-h" style="margin-bottom:8px">Ce qu'Operator fait pour vous</div>
+    <div class="s-p" style="margin-bottom:18px">Tout ce dont vous avez besoin pour gérer votre SAV.</div>
+    <div class="feat-list">
+      <div class="feat"><div class="feat-ic bg-bl">📋</div><div><div class="feat-t">9 protocoles SAV</div><div class="feat-s">Procédures standardisées par type de litige</div></div></div>
+      <div class="feat"><div class="feat-ic bg-gr">✉️</div><div><div class="feat-t">15 templates prêts à l'emploi</div><div class="feat-s">Copie en 1 clic avec votre nom de marque</div></div></div>
+      <div class="feat"><div class="feat-ic bg-or">🔍</div><div><div class="feat-t">Recherche contextuelle</div><div class="feat-s">Trouvez le bon protocole en un mot-clé</div></div></div>
+    </div>
+    <button class="btn-p" onclick="nextStep(2)">Continuer</button>
+  </div>
+  <!-- Step 2 -->
+  <div class="ss" id="ss2">
+    <div class="s-dots" style="margin-bottom:28px"><div class="sdot"></div><div class="sdot"></div><div class="sdot on"></div><div class="sdot"></div></div>
+    <div class="s-h">Votre marque</div>
+    <div class="s-p">Ce nom sera automatiquement inséré dans tous vos templates de réponse client.</div>
+    <input class="s-input" id="brand-input" type="text" placeholder="Nom de votre entreprise" oninput="checkBrand()" onkeydown="if(event.key==='Enter')finishSetup()">
+    <button class="btn-p" id="brand-btn" onclick="finishSetup()" disabled>Configurer Operator</button>
+    <button class="btn-g" onclick="skipBrand()">Ignorer pour l'instant</button>
+  </div>
+  <!-- Step 3 -->
+  <div class="ss" id="ss3">
+    <div class="check-big">✓</div>
+    <div class="s-dots" style="margin-bottom:28px"><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot on"></div></div>
+    <div class="s-h">Tout est prêt !</div>
+    <div class="s-p" id="done-p">Operator est configuré. Gérez vos litiges comme un professionnel.</div>
+    <button class="btn-p" onclick="launchApp()">Ouvrir Operator</button>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <div class="bar">
+    <div class="dots"><div class="dot d-r"></div><div class="dot d-y"></div><div class="dot d-g"></div></div>
+    <span class="bar-t">Operator</span>
+    <div class="bar-r"><span class="bar-co" id="bar-co"></span><span class="bar-v">v1.1</span></div>
+  </div>
+  <div class="wrap">
+    <aside class="side">
+      <div class="side-h">
+        <div class="co-pill"><div class="co-dot"></div><div class="co-nm" id="co-nm">—</div></div>
+        <div class="nav-lbl">Navigation</div>
+        <div class="nav on" id="n-dash" onclick="show('dash',this)">
+          <div class="nav-ic"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor"/></svg></div>
+          Vue d'ensemble
+        </div>
+        <div class="nav" id="n-proto" onclick="show('proto',this)">
+          <div class="nav-ic"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          Protocoles<span class="nbadge">9</span>
+        </div>
+        <div class="nav" id="n-tmpl" onclick="show('tmpl',this)">
+          <div class="nav-ic"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+          Templates<span class="nbadge">15</span>
+        </div>
+      </div>
+      <div class="sdiv"></div>
+      <div class="side-h">
+        <div class="nav-lbl">Système</div>
+        <div class="nav" id="n-set" onclick="show('set',this)">
+          <div class="nav-ic"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.42 1.42M11.53 11.53l1.42 1.42M3.05 12.95l1.42-1.42M11.53 4.47l1.42-1.42" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+          Paramètres
+        </div>
+        <div class="nav" id="n-info" onclick="show('info',this)">
+          <div class="nav-ic"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 7v4M8 5.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          Informations
+        </div>
+      </div>
+      <div class="sfoot">Développé par <strong>Nexa</strong><br>× <strong>LOCO Clothings</strong></div>
+    </aside>
+
+    <main class="main-a">
+      <div class="content">
+
+        <!-- DASHBOARD -->
+        <div class="pg on" id="p-dash">
+          <div class="ph"><h1>Vue d'ensemble</h1><p>Accès rapide aux protocoles et templates</p></div>
+          <div class="sw">
+            <svg class="sw-ico" width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#444" stroke-width="1.5"/><path d="M11 11l3 3" stroke="#444" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <input id="si" type="text" placeholder="Rechercher : perdu, retard, chargeback, vol…" oninput="doSearch(this.value)" onblur="hideSearch()" onfocus="doSearch(this.value)">
+            <div class="sr" id="sr"></div>
+          </div>
+          <div class="slb">Litiges critiques</div>
+          <div class="g2">
+            <div class="card" onclick="gotoProto(1)"><div class="ch"><div class="ci bg-rd">🔴</div><span class="cs c-rd">Critique</span></div><div class="ct">Livré non reçu</div><div class="cd">Transporteur indique livraison, client déclare ne rien avoir reçu.</div><span class="lbtn">Voir protocole ›</span></div>
+            <div class="card" onclick="gotoProto(2)"><div class="ch"><div class="ci bg-rd">🚫</div><span class="cs c-rd">Fraude</span></div><div class="ct">Contestation chargeback</div><div class="cd">Client conteste le paiement auprès de sa banque après réception.</div><span class="lbtn">Voir protocole ›</span></div>
+          </div>
+          <div class="slb">Litiges courants</div>
+          <div class="g3">
+            <div class="card" onclick="gotoProto(0)"><div class="ch"><div class="ci bg-or">📦</div><span class="cs c-or">Fréquent</span></div><div class="ct">Retard livraison</div><div class="cd">Suivi bloqué ou délai dépassé.</div><span class="lbtn">Voir ›</span></div>
+            <div class="card" onclick="gotoProto(3)"><div class="ch"><div class="ci bg-or">💢</div><span class="cs c-or">Urgent</span></div><div class="ct">Produit endommagé</div><div class="cd">Colis abîmé ou article cassé à réception.</div><span class="lbtn">Voir ›</span></div>
+            <div class="card" onclick="gotoProto(4)"><div class="ch"><div class="ci bg-bl">🔁</div><span class="cs c-bl">Standard</span></div><div class="ct">Erreur commande</div><div class="cd">Article incorrect ou mauvaise référence.</div><span class="lbtn">Voir ›</span></div>
+          </div>
+          <div class="g3">
+            <div class="card" onclick="gotoProto(5)"><div class="ch"><div class="ci bg-nt">↩</div><span class="cs c-nt">Courant</span></div><div class="ct">Retour / Remboursement</div><div class="cd">Retour sans défaut, rétractation légale.</div><span class="lbtn">Voir ›</span></div>
+            <div class="card" onclick="gotoProto(6)"><div class="ch"><div class="ci bg-pu">🔒</div><span class="cs c-pu">Délicat</span></div><div class="ct">Colis volé</div><div class="cd">Vol confirmé en point relais ou boîte aux lettres.</div><span class="lbtn">Voir ›</span></div>
+            <div class="card" onclick="gotoProto(7)"><div class="ch"><div class="ci bg-or">📦</div><span class="cs c-or">Logistique</span></div><div class="ct">Retourné expéditeur</div><div class="cd">Colis revenu sans tentative de livraison.</div><span class="lbtn">Voir ›</span></div>
+          </div>
+          <div class="g2">
+            <div class="card" onclick="gotoProto(8)"><div class="ch"><div class="ci bg-bl">★</div><span class="cs c-bl">Réputation</span></div><div class="ct">Avis négatif / litige public</div><div class="cd">Client menace ou publie un avis négatif en ligne.</div><span class="lbtn">Voir ›</span></div>
+            <div class="card" onclick="show('tmpl',document.getElementById('n-tmpl'))"><div class="ch"><div class="ci bg-gr">✉</div><span class="cs c-gr">Rapide</span></div><div class="ct">Templates prêts</div><div class="cd">15 modèles de réponse avec votre marque auto-insérée.</div><span class="lbtn">Voir tous ›</span></div>
+          </div>
+        </div>
+
+        <!-- PROTOCOLS -->
+        <div class="pg" id="p-proto">
+          <div class="ph"><h1>Protocoles SAV</h1><p>Sélectionnez un litige pour afficher la procédure complète</p></div>
+          <div class="proto-shell">
+            <div class="proto-sidebar" id="proto-list"></div>
+            <div class="proto-detail" id="proto-detail"></div>
+          </div>
+        </div>
+
+        <!-- TEMPLATES -->
+        <div class="pg" id="p-tmpl">
+          <div class="ph"><h1>Templates de réponse</h1><p>Variables en bleu — votre marque est insérée automatiquement</p></div>
+          <div class="tmpl-cats">
+            <button class="tcat on" onclick="filterTmpl('all',this)">Tous</button>
+            <button class="tcat" onclick="filterTmpl('retard',this)">Retard</button>
+            <button class="tcat" onclick="filterTmpl('litige',this)">Litige</button>
+            <button class="tcat" onclick="filterTmpl('endommage',this)">Endommagé</button>
+            <button class="tcat" onclick="filterTmpl('retour',this)">Retour</button>
+            <button class="tcat" onclick="filterTmpl('fraude',this)">Fraude</button>
+            <button class="tcat" onclick="filterTmpl('autre',this)">Autre</button>
+          </div>
+          <div id="tmpl-list"></div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="pg" id="p-set">
+          <div class="ph"><h1>Paramètres</h1><p>Configuration de votre espace Operator</p></div>
+          <div class="iblock">
+            <div class="ibt">Identité de marque</div>
+            <div class="ir">
+              <div><div class="ik">Nom de l'entreprise</div><div class="set-sub">Inséré automatiquement dans tous les templates</div></div>
+              <input class="set-input" id="set-brand" type="text" placeholder="Nom de marque">
+            </div>
+            <div class="ir" style="border-bottom:none;padding-top:14px"><div></div><button class="save-btn" onclick="saveBrand()">Enregistrer</button></div>
+          </div>
+          <div class="iblock">
+            <div class="ibt">Données</div>
+            <div class="ir" style="border-bottom:none">
+              <div><div class="ik">Réinitialiser la configuration</div><div class="set-sub">Supprime le nom de marque et relance le setup</div></div>
+              <button class="reset-btn" onclick="resetApp()">Réinitialiser</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- INFO -->
+        <div class="pg" id="p-info">
+          <div class="ph"><h1>Informations</h1><p>À propos de ce logiciel</p></div>
+          <div class="iblock">
+            <div class="ibt">Produit</div>
+            <div class="ir"><span class="ik">Nom</span><span class="iv">Operator</span></div>
+            <div class="ir"><span class="ik">Version</span><span class="iv">1.1</span></div>
+            <div class="ir"><span class="ik">Type</span><span class="iv">SAV Command Center</span></div>
+            <div class="ir" style="border-bottom:none"><span class="ik">Compatibilité</span><span class="iv">Multi-marques · Multi-transporteurs</span></div>
+          </div>
+          <div class="iblock">
+            <div class="ibt">Équipe</div>
+            <div class="ir"><span class="ik">Développé par</span><span class="iv">Nexa</span></div>
+            <div class="ir" style="border-bottom:none"><span class="ik">En collaboration avec</span><span class="iv">LOCO Clothings</span></div>
+          </div>
+          <div class="iblock">
+            <div class="ibt">Contenu v1.1</div>
+            <div class="ir"><span class="ik">Protocoles</span><span class="iv">9</span></div>
+            <div class="ir"><span class="ik">Templates</span><span class="iv">15</span></div>
+            <div class="ir" style="border-bottom:none"><span class="ik">Nouveautés</span><span class="iv">Chargeback · Vol · Retour exp. · Avis négatif</span></div>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </main>
+  </div><!-- /wrap -->
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+var BK='operator_brand_v1', SK='operator_setup_v1';
+var brand='', curStep=0;
+
+function ls_get(k){try{return localStorage.getItem(k)||'';}catch(e){return '';}}
+function ls_set(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+
+function init(){
+  brand=ls_get(BK);
+  updateBrandUI();
+  if(ls_get(SK)==='1'){
+    document.getElementById('setup').classList.add('hidden');
+  }
+  buildProtoList();
+  renderProto(0);
+  renderTemplates();
+  var sb=document.getElementById('set-brand');
+  if(sb) sb.value=brand;
+}
+
+function updateBrandUI(){
+  var n=brand||'Ma marque';
+  document.getElementById('co-nm').textContent=n;
+  var bc=document.getElementById('bar-co');
+  if(bc) bc.textContent=brand?n:'';
+}
+
+function nextStep(s){
+  document.getElementById('ss'+curStep).classList.remove('vis');
+  curStep=s;
+  setTimeout(function(){document.getElementById('ss'+s).classList.add('vis');},50);
+}
+
+function checkBrand(){
+  var v=document.getElementById('brand-input').value.trim();
+  document.getElementById('brand-btn').disabled=(v.length===0);
+}
+
+function finishSetup(){
+  var v=document.getElementById('brand-input').value.trim();
+  if(!v) return;
+  brand=v;
+  ls_set(BK,v);
+  ls_set(SK,'1');
+  document.getElementById('done-p').textContent='Operator est configuré pour '+brand+'. Gérez vos litiges comme un professionnel.';
+  nextStep(3);
+}
+
+function skipBrand(){
+  ls_set(SK,'1');
+  document.getElementById('done-p').textContent='Operator est prêt. Configurez votre marque dans Paramètres à tout moment.';
+  nextStep(3);
+}
+
+function launchApp(){
+  var s=document.getElementById('setup');
+  s.style.transition='opacity .4s';
+  s.style.opacity='0';
+  setTimeout(function(){s.classList.add('hidden');},380);
+  updateBrandUI();
+  renderTemplates();
+  var sb=document.getElementById('set-brand');
+  if(sb) sb.value=brand;
+}
+
+function saveBrand(){
+  var v=document.getElementById('set-brand').value.trim();
+  brand=v;
+  ls_set(BK,v);
+  updateBrandUI();
+  renderTemplates();
+  toast('Marque enregistrée ✓');
+}
+
+function resetApp(){
+  ls_set(BK,''); ls_set(SK,'');
+  location.reload();
+}
+
+function show(id,el){
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  var pg=document.getElementById('p-'+id);
+  if(pg) pg.classList.add('on');
+  document.querySelectorAll('.nav').forEach(function(n){n.classList.remove('on');});
+  if(el) el.classList.add('on');
+  else{var t=document.getElementById('n-'+id); if(t) t.classList.add('on');}
+}
+
+/* ── PROTOCOLS ── */
+var protos=[
+  {name:'Retard de livraison',sub:'Suivi bloqué · délai dépassé',color:'var(--or)',badge:'Fréquent',bc:'c-or',
+   steps:['<strong>Vérifier le suivi</strong> — Comparer le statut transporteur avec les délais annoncés à la commande.',
+          '<strong>Attente préventive</strong> — Demander de patienter 24 à 72h si le statut est récent (retards de scan normaux).',
+          '<strong>Escalade transporteur</strong> — Si aucune évolution après 72h, ouvrir une demande de localisation officielle.',
+          '<strong>Suivi client</strong> — Tenir le client informé à chaque étape de l\'avancement.'],
+   decs:[['c-nt','Délai encore valide','→ Demander de patienter'],['c-or','Blocage anormal &gt;72h','→ Enquête transporteur'],['c-rd','Perte confirmée','→ Remplacement ou remboursement']],tmpl:'retard'},
+  {name:'Livré non reçu',sub:'Statut "Livré" · client sans colis',color:'var(--rd)',badge:'Critique',bc:'c-rd',
+   steps:['<strong>Vérification immédiate</strong> — Demander de vérifier : voisins, gardien, point relais, boîte aux lettres, lieu sécurisé.',
+          '<strong>Attente post-statut</strong> — Patienter 24h après "Livré" (scans parfois décalés).',
+          '<strong>Sécurisation du dossier</strong> — Exiger une <strong>attestation sur l\'honneur signée</strong> + <strong>copie de pièce d\'identité</strong>. Filtre anti-fraude essentiel.',
+          '<strong>Réclamation officielle</strong> — Ouvrir une enquête auprès du transporteur avec les documents.',
+          '<strong>Résolution</strong> — Attendre le résultat avant toute décision de renvoi ou remboursement.'],
+   decs:[['c-gr','Dossier cohérent + enquête non concluante','→ Remplacement ou remboursement'],['c-rd','Preuve GPS de livraison confirmée','→ Refus du litige'],['c-or','Documents non fournis','→ Dossier suspendu']],tmpl:'litige'},
+  {name:'Contestation chargeback',sub:'Litige bancaire · rétrofacturation',color:'var(--rd)',badge:'Fraude',bc:'c-rd',
+   steps:['<strong>Identification</strong> — Le client conteste le paiement directement auprès de sa banque.',
+          '<strong>Rassemblement des preuves</strong> — Collecter : confirmation commande, preuve d\'expédition, suivi transporteur, historique communications.',
+          '<strong>Réponse bancaire</strong> — Soumettre les preuves à votre prestataire (Stripe, PayPal…) dans le délai imparti (souvent 7 jours).',
+          '<strong>Documentation</strong> — Si le client a reçu son colis : joindre preuve de livraison GPS + photos éventuelles.',
+          '<strong>Décision finale</strong> — La banque arbitre. Conserver le dossier complet en cas de réescalade.'],
+   decs:[['c-gr','Preuves solides soumises dans les délais','→ Forte probabilité de gagner le chargeback'],['c-rd','Délai dépassé ou preuves insuffisantes','→ Remboursement probable, clôturer'],['c-or','Client de mauvaise foi répété','→ Bloquer le compte, signaler la fraude']],tmpl:'fraude'},
+  {name:'Produit endommagé',sub:'Colis abîmé · article cassé',color:'var(--or)',badge:'Urgent',bc:'c-or',
+   steps:['<strong>Preuves visuelles</strong> — Demander photos du produit, de l\'emballage extérieur et de l\'étiquette transporteur.',
+          '<strong>Analyse logistique</strong> — Vérifier la cohérence entre l\'état du colis et les conditions de transport.',
+          '<strong>Identification de responsabilité</strong> — Dommage transport ou défaut de production ?',
+          '<strong>Action corrective</strong> — Remplacement ou remboursement selon résultat de l\'analyse.'],
+   decs:[['c-gr','Défaut confirmé (photos probantes)','→ Remplacement ou remboursement'],['c-or','Doute sur l\'origine','→ Analyse complémentaire'],['c-rd','Utilisation anormale suspectée','→ Refus ou geste partiel']],tmpl:'endommage'},
+  {name:'Erreur de commande',sub:'Article incorrect · mauvaise référence',color:'var(--bl)',badge:'Standard',bc:'c-bl',
+   steps:['<strong>Vérification commande</strong> — Contrôler les références commandées dans le back-office.',
+          '<strong>Contrôle expédition</strong> — Vérifier le bon de préparation et les références expédiées.',
+          '<strong>Comparaison</strong> — Identifier précisément l\'écart entre commande et réception.',
+          '<strong>Identification de l\'origine</strong> — Erreur vendeur (mauvaise préparation) ou erreur client ?'],
+   decs:[['c-rd','Erreur vendeur confirmée','→ Échange gratuit + étiquette retour offerte'],['c-nt','Erreur client','→ Retour à ses frais, échange possible']],tmpl:'autre'},
+  {name:'Retour / Remboursement',sub:'Sans défaut · rétractation légale',color:'var(--t3)',badge:'Courant',bc:'c-nt',
+   steps:['<strong>Politique de retour</strong> — Vérifier que la marque autorise le retour sans défaut (légal : 14 jours).',
+          '<strong>Délai</strong> — Confirmer que la demande est dans le délai applicable.',
+          '<strong>État du produit</strong> — Produit intact, non utilisé, emballage d\'origine.',
+          '<strong>Instructions</strong> — Envoyer la procédure de retour (adresse, modalités, délai remboursement).'],
+   decs:[['c-gr','Conforme aux conditions','→ Remboursement après réception'],['c-rd','Hors délai ou produit utilisé','→ Refus motivé par les CGV']],tmpl:'retour'},
+  {name:'Colis volé',sub:'Vol en point relais ou boîte aux lettres',color:'var(--pu)',badge:'Délicat',bc:'c-pu',
+   steps:['<strong>Confirmation du vol</strong> — Vérifier que le statut indique un dépôt en point relais ou boîte aux lettres.',
+          '<strong>Déclaration officielle</strong> — Demander au client de déposer une plainte (récépissé indispensable).',
+          '<strong>Contact transporteur</strong> — Ouvrir une réclamation avec : preuve de dépôt + copie de la plainte.',
+          '<strong>Sécurisation</strong> — Exiger attestation sur l\'honneur + copie de pièce d\'identité.',
+          '<strong>Résolution</strong> — Remplacement uniquement après validation du dossier complet.'],
+   decs:[['c-gr','Dossier complet + plainte fournie','→ Remplacement ou remboursement'],['c-or','Plainte non encore déposée','→ Dossier suspendu'],['c-rd','Incohérence dans le dossier','→ Refus, maintenir la position']],tmpl:'fraude'},
+  {name:'Retourné expéditeur',sub:'Colis revenu sans livraison',color:'var(--or)',badge:'Logistique',bc:'c-or',
+   steps:['<strong>Analyse du motif</strong> — Identifier la raison : adresse incorrecte, absent, refusé, NPAI.',
+          '<strong>Contact client</strong> — Vérifier et corriger l\'adresse de livraison.',
+          '<strong>Responsabilité</strong> — Erreur adresse client ou erreur saisie côté vendeur ?',
+          '<strong>Action</strong> — Proposer renvoi (frais selon responsabilité) ou remboursement hors frais de port.'],
+   decs:[['c-nt','Erreur adresse client','→ Renvoi aux frais du client'],['c-bl','Erreur saisie vendeur','→ Renvoi gratuit'],['c-or','Client introuvable / absent répété','→ Remboursement produit, hors port']],tmpl:'retard'},
+  {name:'Avis négatif / litige public',sub:'Plateforme publique · réputation en jeu',color:'var(--bl)',badge:'Réputation',bc:'c-bl',
+   steps:['<strong>Ne pas paniquer</strong> — Répondre calmement et publiquement dans les 24h, avec empathie, sans défensive.',
+          '<strong>Sortir du public</strong> — Inviter le client à vous contacter en privé pour résoudre le problème.',
+          '<strong>Vérification interne</strong> — Analyser le dossier : y a-t-il un vrai problème non résolu ?',
+          '<strong>Résolution rapide</strong> — Si légitime, agir vite et demander la modification de l\'avis.',
+          '<strong>Documentation</strong> — Conserver toute trace en cas d\'escalade ou de récidive.'],
+   decs:[['c-gr','Problème légitime résolu','→ Demander la modification de l\'avis'],['c-nt','Avis de mauvaise foi','→ Signaler à la plateforme (Google, Trustpilot…)'],['c-rd','Menace extorsive (chantage à l\'avis)','→ Refuser, signaler, conserver les preuves']],tmpl:'autre'},
+];
+
+function buildProtoList(){
+  var h='';
+  protos.forEach(function(p,i){
+    h+='<div class="pl-item'+(i===0?' on':'')+'" onclick="renderProto('+i+')">';
+    h+='<div class="pl-dot" style="background:'+p.color+'"></div>';
+    h+='<div class="pl-nm">'+p.name+'</div></div>';
+  });
+  document.getElementById('proto-list').innerHTML=h;
+}
+
+function renderProto(i){
+  document.querySelectorAll('.pl-item').forEach(function(el,idx){el.classList.toggle('on',idx===i);});
+  var p=protos[i];
+  var h='<div class="pd-h">'+p.name+'</div><div class="pd-sub">'+p.sub+'</div>';
+  h+='<div class="slb">Procédure</div><div class="steps">';
+  p.steps.forEach(function(s,n){h+='<div class="step"><div class="sn">'+(n+1)+'</div><div class="stx">'+s+'</div></div>';});
+  h+='</div><div class="slb">Logique de décision</div><div class="decs">';
+  p.decs.forEach(function(d){h+='<div class="dec"><span class="dif '+d[0]+'">Si</span><span class="dth">'+d[1]+'</span><span class="dar">'+d[2]+'</span></div>';});
+  h+='</div><button class="go-tmpl" onclick="gotoTmpl(\''+p.tmpl+'\')">Voir les templates associés ›</button>';
+  document.getElementById('proto-detail').innerHTML=h;
+}
+
+function gotoProto(i){
+  show('proto',document.getElementById('n-proto'));
+  setTimeout(function(){renderProto(i);},40);
+}
+
+/* ── TEMPLATES ── */
+var tmpls=[
+  {cat:'retard',lvl:'Niveau 1',lbl:'Patience — premier contact',ton:'Neutre',lc:'c-nt',
+   body:'Bonjour [Prénom],\n\nVotre commande [N° commande] est en cours d\'acheminement. Il arrive que le suivi présente des délais de mise à jour de 24 à 48h.\n\nNous vous invitons à patienter et à revérifier le statut d\'ici demain.\n\nCordialement,\n[BRAND]'},
+  {cat:'retard',lvl:'Niveau 2',lbl:'Enquête transporteur en cours',ton:'Proactif',lc:'c-or',
+   body:'Bonjour [Prénom],\n\nSuite à votre signalement, nous avons ouvert une vérification auprès du transporteur concernant votre commande [N° commande].\n\nUne enquête de localisation a été initiée. Nous revenons vers vous sous 48 à 72h ouvrées.\n\nNous nous excusons pour ce désagrément.\n\nCordialement,\n[BRAND]'},
+  {cat:'retard',lvl:'Résolution',lbl:'Perte confirmée — renvoi',ton:'Empathique',lc:'c-gr',
+   body:'Bonjour [Prénom],\n\nSuite à notre enquête, votre colis [N° commande] est malheureusement considéré perdu par le transporteur.\n\nNous procédons immédiatement au renvoi d\'un nouveau colis. Vous recevrez un numéro de suivi dès l\'expédition.\n\nEncore toutes nos excuses.\n\nCordialement,\n[BRAND]'},
+  {cat:'retard',lvl:'Logistique',lbl:'Colis retourné expéditeur',ton:'Neutre',lc:'c-nt',
+   body:'Bonjour [Prénom],\n\nVotre commande [N° commande] nous est revenue suite à une impossibilité de livraison ([motif : adresse incorrecte / absent / refusé]).\n\nPourriez-vous nous confirmer ou corriger votre adresse ? Nous procèderons à un nouvel envoi dès que possible.\n\nCordialement,\n[BRAND]'},
+  {cat:'litige',lvl:'Étape 1',lbl:'Vérifications préliminaires',ton:'Bienveillant',lc:'c-nt',
+   body:'Bonjour [Prénom],\n\nLe suivi de votre commande [N° commande] indique une livraison effectuée le [Date].\n\nAvant d\'engager une procédure, nous vous invitons à :\n— Vérifier auprès de vos voisins ou du gardien\n— Contrôler votre boîte aux lettres et espaces sécurisés\n— Patienter 24h supplémentaires (scans parfois décalés)\n\nSi le colis reste introuvable, revenez vers nous.\n\nCordialement,\n[BRAND]'},
+  {cat:'litige',lvl:'Étape 2',lbl:'Demande de documents officiels',ton:'Formel',lc:'c-or',
+   body:'Bonjour [Prénom],\n\nAfin d\'instruire votre dossier et d\'engager une réclamation officielle auprès du transporteur, nous avons besoin de :\n\n1. Attestation sur l\'honneur signée (non-réception du colis)\n2. Copie de votre pièce d\'identité en cours de validité\n\nCes documents sont indispensables pour toute ouverture de litige.\n\nCordialement,\n[BRAND]'},
+  {cat:'litige',lvl:'Refus',lbl:'Livraison GPS confirmée',ton:'Ferme',lc:'c-rd',
+   body:'Bonjour [Prénom],\n\nSuite à notre enquête, la livraison de votre commande [N° commande] a été confirmée avec une géolocalisation précise à votre adresse le [Date].\n\nNous ne sommes pas en mesure de donner suite à votre demande de remplacement ou remboursement.\n\nCordialement,\n[BRAND]'},
+  {cat:'fraude',lvl:'Chargeback',lbl:'Réponse litige bancaire',ton:'Professionnel',lc:'c-rd',
+   body:'Objet : Réponse contestation commande [N° commande]\n\nBonjour,\n\nNous contestons la rétrofacturation initiée par [Prénom] pour la commande [N° commande] du [Date].\n\nLes éléments joints démontrent :\n— Confirmation de commande et paiement validé\n— Numéro de suivi [N° suivi] expédié le [Date exp.]\n— Preuve de livraison transporteur\n\nNous restons disponibles pour tout complément.\n\n[BRAND]'},
+  {cat:'fraude',lvl:'Vol',lbl:'Demande plainte officielle',ton:'Formel',lc:'c-pu',
+   body:'Bonjour [Prénom],\n\nNous prenons très au sérieux votre signalement de vol concernant la commande [N° commande].\n\nPour engager une procédure, nous avons besoin de :\n1. Un récépissé de dépôt de plainte auprès des autorités\n2. Une attestation sur l\'honneur signée\n3. Une copie de votre pièce d\'identité\n\nUne fois ces documents reçus, nous traiterons votre dossier en priorité.\n\nCordialement,\n[BRAND]'},
+  {cat:'endommage',lvl:'Étape 1',lbl:'Demande de photos',ton:'Neutre',lc:'c-nt',
+   body:'Bonjour [Prénom],\n\nNous sommes désolés que votre commande [N° commande] soit arrivée endommagée.\n\nMerci de nous transmettre :\n— Photos du produit reçu\n— Photos de l\'emballage extérieur\n— Photo de l\'étiquette transporteur\n\nCordialement,\n[BRAND]'},
+  {cat:'endommage',lvl:'Résolution',lbl:'Remplacement confirmé',ton:'Empathique',lc:'c-gr',
+   body:'Bonjour [Prénom],\n\nAprès analyse de votre dossier, nous confirmons le dommage sur votre commande [N° commande].\n\nUn nouveau produit vous sera expédié sans délai. Vous recevrez le numéro de suivi dès l\'envoi.\n\nNous nous excusons sincèrement pour ce désagrément.\n\nCordialement,\n[BRAND]'},
+  {cat:'retour',lvl:'Accepté',lbl:'Instructions de retour',ton:'Professionnel',lc:'c-gr',
+   body:'Bonjour [Prénom],\n\nVotre demande de retour pour la commande [N° commande] a été acceptée.\n\nProcédure :\n1. Renvoyez le produit à : [Adresse de retour]\n2. Indiquez votre numéro de commande sur le colis\n3. Conservez votre preuve d\'envoi\n\nLe remboursement sera effectué sous [X] jours ouvrés après réception.\n\nCordialement,\n[BRAND]'},
+  {cat:'retour',lvl:'Refusé',lbl:'Hors conditions de retour',ton:'Ferme',lc:'c-rd',
+   body:'Bonjour [Prénom],\n\nNous avons examiné votre demande de retour pour la commande [N° commande].\n\nNous ne pouvons pas y donner suite car [motif : délai de 14 jours dépassé / produit utilisé ou endommagé].\n\nNos conditions générales de vente précisent les modalités de retour applicables.\n\nCordialement,\n[BRAND]'},
+  {cat:'autre',lvl:'Erreur vendeur',lbl:'Échange confirmé',ton:'Empathique',lc:'c-bl',
+   body:'Bonjour [Prénom],\n\nNous confirmons une erreur de préparation pour votre commande [N° commande]. Toutes nos excuses.\n\nUn renvoi du produit correct — [Référence] — sera effectué sans frais. Une étiquette prépayée pour le retour de l\'article incorrect vous sera envoyée prochainement.\n\nCordialement,\n[BRAND]'},
+  {cat:'autre',lvl:'Avis négatif',lbl:'Réponse publique empathique',ton:'Diplomate',lc:'c-bl',
+   body:'Bonjour [Prénom],\n\nNous sommes sincèrement désolés de votre expérience. La satisfaction de nos clients est notre priorité absolue.\n\nNous vous invitons à nous contacter directement à [Email SAV] afin de résoudre cette situation rapidement et de manière personnalisée.\n\nCordialement,\n[BRAND]'},
+];
+
+function escH(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function renderTemplates(){
+  var b=brand||'[Votre marque]';
+  var cur=document.querySelector('.tcat.on');
+  var f=cur?cur.getAttribute('onclick').match(/'([^']+)'/)[1]:'all';
+  var h='';
+  tmpls.forEach(function(t,i){
+    var body=t.body.replace(/\[BRAND\]/g,b);
+    var hidden=(f!=='all'&&t.cat!==f)?'hidden':'';
+    h+='<div class="tit '+hidden+'" data-cat="'+t.cat+'">';
+    h+='<div class="tm"><span class="ttag '+t.lc+'">'+t.lvl+'</span><span class="tlbl">'+t.lbl+'</span><span class="tton">'+t.ton+'</span></div>';
+    h+='<div class="tbody" id="tb'+i+'">'+escH(body)+'</div>';
+    h+='<button class="cpbtn" onclick="cpTmpl('+i+',this)">'+cpIco()+' Copier</button>';
+    h+='</div>';
+  });
+  document.getElementById('tmpl-list').innerHTML=h;
+}
+
+function cpIco(){return '<svg width="10" height="10" viewBox="0 0 14 14" fill="none"><rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M3 9H2a1 1 0 01-1-1V2a1 1 0 011-1h6a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';}
+function okIco(){return '<svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
+
+function filterTmpl(cat,el){
+  document.querySelectorAll('.tcat').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+  document.querySelectorAll('.tit').forEach(function(t){
+    t.classList.toggle('hidden',cat!=='all'&&t.dataset.cat!==cat);
+  });
+}
+
+function gotoTmpl(cat){
+  show('tmpl',document.getElementById('n-tmpl'));
+  setTimeout(function(){
+    var btn=Array.from(document.querySelectorAll('.tcat')).find(function(b){
+      return b.getAttribute('onclick').indexOf("'"+cat+"'")>-1;
+    });
+    if(btn) filterTmpl(cat,btn);
+  },60);
+}
+
+function cpTmpl(i,btn){
+  var el=document.getElementById('tb'+i);
+  if(!el) return;
+  navigator.clipboard.writeText(el.innerText).then(function(){
+    btn.classList.add('ok');
+    btn.innerHTML=okIco()+' Copié';
+    toast('Template copié ✓');
+    setTimeout(function(){btn.classList.remove('ok');btn.innerHTML=cpIco()+' Copier';},2000);
+  });
+}
+
+/* ── SEARCH ── */
+var sd=[
+  {k:['perdu','introuvable','non reçu','livré non reçu'],l:'Livré non reçu',pi:1},
+  {k:['retard','bloqué','transit','délai','lent'],l:'Retard de livraison',pi:0},
+  {k:['chargeback','contestation','banque','rétrofacturation'],l:'Contestation chargeback',pi:2},
+  {k:['cassé','abîmé','endommagé','défectueux'],l:'Produit endommagé',pi:3},
+  {k:['erreur','mauvais','incorrect','échange'],l:'Erreur de commande',pi:4},
+  {k:['retour','remboursement','annule','rétractation'],l:'Retour / Remboursement',pi:5},
+  {k:['volé','vol','point relais'],l:'Colis volé',pi:6},
+  {k:['retourné','expéditeur','npai','absent'],l:'Retourné expéditeur',pi:7},
+  {k:['avis','négatif','public','réputation'],l:'Avis négatif',pi:8},
+  {k:['fraude','attestation','plainte'],l:'Templates fraude',cat:'fraude'},
+  {k:['template','modèle','mail','message'],l:'Tous les templates',pg:'tmpl'},
+];
+var ht;
+function doSearch(v){
+  var el=document.getElementById('sr');
+  if(!v.trim()){el.classList.remove('vis');return;}
+  var q=v.toLowerCase();
+  var m=sd.filter(function(d){return d.k.some(function(k){return k.indexOf(q)>-1||q.indexOf(k)>-1;});});
+  if(!m.length){el.classList.remove('vis');return;}
+  el.innerHTML=m.slice(0,6).map(function(x){
+    var badge=x.pi!==undefined?protos[x.pi].badge:(x.cat?'Template':'Page');
+    return '<div class="sri" onclick="hsc('+(x.pi!==undefined?x.pi:-1)+',\''+(x.cat||'')+'\',\''+(x.pg||'')+'\')">'
+      +'<span class="s-tag">'+badge+'</span><span class="s-txt">'+x.l+'</span></div>';
+  }).join('');
+  el.classList.add('vis');
+}
+function hideSearch(){ht=setTimeout(function(){document.getElementById('sr').classList.remove('vis');},200);}
+function hsc(pi,cat,pg){
+  clearTimeout(ht);
+  document.getElementById('sr').classList.remove('vis');
+  document.getElementById('si').value='';
+  if(pi>=0){gotoProto(pi);}
+  else if(cat){gotoTmpl(cat);}
+  else if(pg){show(pg,document.getElementById('n-'+pg));}
+}
+
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('sh');
+  setTimeout(function(){t.classList.remove('sh');},1800);
+}
+
+init();
+</script>
+</body>
+</html>
